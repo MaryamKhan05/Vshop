@@ -1,5 +1,3 @@
-
-
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialCommunityIcons, Entypo } from "@expo/vector-icons";
@@ -41,6 +39,14 @@ export default function MyTab() {
               color={focused ? COLORS.blue : color}
             />
           ),
+          headerTitleAlign: "center",
+          headerTitleStyle: {
+            color: COLORS.white,
+          },
+          headerTintColor: COLORS.white,
+          headerStyle: {
+            backgroundColor: COLORS.blue,
+          },
         }}
       />
       <Tab.Screen
@@ -54,6 +60,14 @@ export default function MyTab() {
               color={focused ? COLORS.blue : color}
             />
           ),
+          headerTitleAlign: "center",
+          headerTitleStyle: {
+            color: COLORS.white,
+          },
+          headerTintColor: COLORS.white,
+          headerStyle: {
+            backgroundColor: COLORS.blue,
+          },
         }}
       />
     </Tab.Navigator>

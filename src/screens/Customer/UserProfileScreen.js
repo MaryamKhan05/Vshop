@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -15,21 +15,20 @@ import {
   MaterialCommunityIcons,
   Entypo,
 } from "@expo/vector-icons";
-import {
-  collection,
-  doc,
-  getDoc,
-  updateDoc,
-} from "firebase/firestore";
+import { useNavigation } from "@react-navigation/native";
+import { collection, doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { auth, db, storage } from "../../firebase/firebaseConfig";
-
+import { context } from "../../context/context";
 import STYLES from "../../constants/styles";
 import COLORS from "../../../assets/colors/colors";
 import { Button, Loader } from "../../components/index";
 const UserProfile = () => {
+  const navigation = useNavigation();
+  const { userName, userPhone, userImage, fetchUser, assistant } =
+    useContext(context);
   const [loading, setLoading] = useState(false);
   const [isToggled, setIsToggled] = useState(false);
   const [name, setName] = useState(null);
@@ -38,30 +37,28 @@ const UserProfile = () => {
   const [newName, setNewName] = useState(null);
   const [newPhone, setNewPhone] = useState(null);
   const [image, setImage] = useState(null);
+  const [newImage, setNewImage] = useState(null);
 
   let clr = COLORS.blue;
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        let userId = await AsyncStorage.getItem("uid");
-        const userDocRef = doc(collection(db, "users"), userId);
-        const userDoc = await getDoc(userDocRef);
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchUser();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setName(userData?.name);
-          setPhone(userData?.phone);
-          setImage(userData?.profilePicture);
-        } else {
-          console.log("No such document!");
-        }
-      } catch (error) {
-        console.error("Error fetching user: ", error);
-      }
-    };
-    fetchUser();
-  }, []);
+  useEffect(() => {
+    if (userName) {
+      setName(userName);
+    }
+    if (userPhone) {
+      setPhone(userPhone);
+    }
+    if (userImage) {
+      setImage(userImage);
+    }
+  }, [userImage, userName, userPhone]);
 
   const updateUser = async () => {
     if (newName && newPhone) {
@@ -75,11 +72,12 @@ const UserProfile = () => {
           name: newName,
           phone: newPhone,
         });
+        setName(newName);
+        alert("User details updated successfully!");
         setLoading(false);
         setDpModalVisible(false);
         setNewName(null);
         setNewPhone(null);
-        alert("User details updated successfully!");
       } catch (error) {
         setLoading(false);
         setDpModalVisible(false);
@@ -100,7 +98,7 @@ const UserProfile = () => {
     });
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      setNewImage(result.assets[0].uri);
       updateProfilePicture();
     }
   };
@@ -109,10 +107,10 @@ const UserProfile = () => {
     setLoading(true);
     try {
       let userId = await AsyncStorage.getItem("uid");
-      const fileName = image.split("/").pop();
+      const fileName = newImage?.split("/").pop();
       const storageRef = ref(storage, `profilePicture/${userId}/${fileName}`);
 
-      const response = await fetch(image);
+      const response = await fetch(newImage);
       const blob = await response.blob();
       await uploadBytes(storageRef, blob);
 
@@ -124,9 +122,13 @@ const UserProfile = () => {
         profilePicture: imageUrl,
         updatedAt: new Date(),
       });
-
+      // await setDoc(userDocRef, {
+      //   profilePicture: imageUrl,
+      //   updatedAt: new Date(),
+      // });
       setLoading(false);
       alert("Profile picture updated successfully!");
+      fetchUser();
     } catch (error) {
       setLoading(false);
       console.error("Error updating profile picture: ", error);
@@ -143,6 +145,20 @@ const UserProfile = () => {
       .catch((error) => alert(error.message));
   };
 
+  // const updateAssistant = async (state) => {
+  //   setIsToggled(!isToggled);
+  //   try {
+  //     const userId = await AsyncStorage.getItem("uid");
+  //     const userDocRef = doc(collection(db, "users"), userId);
+  //     // Toggle the assistant field
+  //     await updateDoc(userDocRef, {
+  //       assistant: state, // Toggle the current value of assistant
+  //     });
+  //     console.log("updated assistant value ");
+  //   } catch (e) {
+  //     console.log("error updateing assitant", e);
+  //   }
+  // };
   return (
     <View style={STYLES.container}>
       <View style={STYLES.card}>
@@ -182,7 +198,7 @@ const UserProfile = () => {
         </View>
         <View style={{ gap: 15 }}>
           {/* assistant */}
-          <View style={[styles.row, { justifyContent: "space-between" }]}>
+          {/* <View style={[styles.row, { justifyContent: "space-between" }]}>
             <View
               style={[
                 {
@@ -201,14 +217,18 @@ const UserProfile = () => {
               />
               <Text style={STYLES.profileHeading}>Assistant</Text>
             </View>
-            <TouchableOpacity onPress={() => setIsToggled(!isToggled)}>
+            <View>
               {isToggled ? (
-                <FontAwesome name="toggle-on" size={28} color={clr} />
+                <TouchableOpacity onPress={() => updateAssistant(false)}>
+                  <FontAwesome name="toggle-on" size={28} color={clr} />
+                </TouchableOpacity>
               ) : (
-                <FontAwesome name="toggle-off" size={28} color={clr} />
+                <TouchableOpacity onPress={() => updateAssistant(true)}>
+                  <FontAwesome name="toggle-off" size={28} color={clr} />
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
-          </View>
+            </View>
+          </View> */}
 
           {/* edit profile */}
           <TouchableOpacity

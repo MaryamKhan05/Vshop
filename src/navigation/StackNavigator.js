@@ -10,10 +10,13 @@ import {
   Cart,
   SignIn,
   SignUp,
+  ItemDetails,
+  Payment,
 } from "../screens/Customer/index";
 import MyTab from "./TabNavigator";
 import { auth } from "../firebase/firebaseConfig";
 import { AddItem, SellerDashboard } from "../screens/Seller/index";
+import COLORS from "../../assets/colors/colors";
 const Stack = createStackNavigator();
 
 export function MyStack() {
@@ -52,6 +55,59 @@ export function MyStack() {
           <Stack.Screen
             name="Add New Item"
             component={AddItem}
+            options={{
+              headerTitleAlign: "center",
+              headerTitleStyle: {
+                color: COLORS.white,
+              },
+              headerTintColor: COLORS.white,
+              headerStyle: {
+                backgroundColor: COLORS.blue,
+              },
+            }}
+          />
+          <Stack.Screen
+            name="ItemDetails"
+            component={ItemDetails}
+            options={{
+              headerTitleAlign: "center",
+              headerTitleStyle: {
+                color: COLORS.white,
+              },
+              headerTintColor: COLORS.white,
+              headerStyle: {
+                backgroundColor: COLORS.blue,
+              },
+            }}
+          />
+          <Stack.Screen
+            name="My Cart"
+            component={Cart}
+            options={{
+              headerTitleAlign: "center",
+              headerTitleStyle: {
+                color: COLORS.white,
+              },
+              headerTintColor: COLORS.white,
+              headerStyle: {
+                backgroundColor: COLORS.blue,
+              },
+            }}
+          />
+          <Stack.Screen
+            name="Payment"
+            component={Payment}
+            options={{
+              headerTitle: "Place Your Order",
+              headerTitleAlign: "center",
+              headerTitleStyle: {
+                color: COLORS.white,
+              },
+              headerTintColor: COLORS.white,
+              headerStyle: {
+                backgroundColor: COLORS.blue,
+              },
+            }}
           />
         </Stack.Navigator>
       ) : (

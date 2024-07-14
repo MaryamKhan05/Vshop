@@ -43,6 +43,81 @@ const styles = StyleSheet.create({
 
 export default RolePickerScreen;
 
+// import React, { useState, useEffect } from "react";
+// import { View, Button, TextInput, StyleSheet } from "react-native";
+// import Voice from "@react-native-voice/voice";
 
+// const RolePickerScreen = () => {
+//   const [recognizedText, setRecognizedText] = useState("");
+//   const [started, setStarted] = useState(false);
 
+//   useEffect(() => {
+//     Voice.onSpeechError = onSpeechError;
+//     Voice.onSpeechResults = onSpeechResults;
 
+//     return () => {
+//       Voice.destroy().then(Voice.removeAllListeners);
+//     };
+//   }, []);
+
+//   const onSpeechError = (event) => {
+//     setRecognizedText(event.value[0]);
+//   };
+//   const onSpeechResults = (event) => {
+//     setRecognizedText(event.value[0]);
+//     console.log(event.value[0]);
+//   };
+
+//   const startListening = async () => {
+//     try {
+//       setRecognizedText("");
+//       setStarted(true);
+//       await Voice.start("en-US");
+//     } catch (e) {
+//       console.error(e);
+//     }
+//   };
+//   const stopListening = async () => {
+//     try {
+//       await Voice.stop();
+//       setStarted(false);
+//     } catch (e) {
+//       console.error(e);
+//     }
+//   };
+
+//   return (
+//     <View style={styles.container}>
+//       <TextInput
+//         style={styles.input}
+//         placeholder="Search..."
+//         value={recognizedText}
+//         onChangeText={setRecognizedText}
+//       />
+//       {started ? (
+//         <Button title="Stop Voice Assistant" onPress={stopListening} />
+//       ) : (
+//         <Button title="Start Voice Assistant" onPress={startListening} />
+//       )}
+//     </View>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     padding: 20,
+//   },
+//   input: {
+//     width: "80%",
+//     height: 40,
+//     borderColor: "gray",
+//     borderWidth: 1,
+//     marginBottom: 20,
+//     paddingHorizontal: 10,
+//   },
+// });
+
+// export default RolePickerScreen;

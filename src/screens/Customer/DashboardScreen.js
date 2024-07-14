@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -9,91 +9,145 @@ import {
   Image,
   ScrollView,
 } from "react-native";
-import { Entypo } from "@expo/vector-icons";
-import { collection, query, getDocs, addDoc } from "firebase/firestore";
-import { db } from "../../firebase/firebaseConfig";
-import { FontAwesome5 } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
+import { FontAwesome, Entypo } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { context } from "../../context/context";
+import Voice from "@react-native-voice/voice";
 import STYLES from "../../constants/styles";
 import COLORS from "../../../assets/colors/colors";
+import { useNavigation } from "@react-navigation/native";
 
 const Dashboard = () => {
+  const navigation = useNavigation();
+  const { bData, sData, oData, data, fetchItems, fetchUser, assistant } =
+    useContext(context);
   const [search, setSearch] = useState(null);
-  const [data, setData] = useState(null);
+  // const [data, setData] = useState(null);
   const [shoesData, setShoesData] = useState(null);
   const [bagsData, setBagsData] = useState(null);
   const [otherData, setOtherData] = useState(null);
+  const [started, setStarted] = useState(false);
+  const [micShow, setMicShow] = useState(false);
 
   useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const itemsCollectionRef = collection(db, "items");
-        const q = query(itemsCollectionRef);
+    Voice.onSpeechError = onSpeechError;
+    Voice.onSpeechResults = onSpeechResults;
 
-        const querySnapshot = await getDocs(q);
-        let fetchedItems = [];
-        querySnapshot.forEach((doc) => {
-          fetchedItems.push({ id: doc.id, ...doc.data() });
-        });
-        setData(fetchedItems);
-        let bagArray = [];
-        let shoesArray = [];
-        let othersArray = [];
-        for (let i = 0; i <= fetchedItems?.length; i++) {
-          if (
-            fetchedItems[i]?.category == "Bag" ||
-            fetchedItems[i]?.category == "bag"
-          ) {
-            bagArray.push(fetchedItems[i]);
-          } else if (
-            fetchedItems[i]?.category == "Shoes" ||
-            fetchedItems[i]?.category == "shoes"
-          ) {
-            shoesArray.push(fetchedItems[i]);
-          } else {
-            othersArray.push(fetchedItems[i]);
-          }
-          setBagsData(bagArray);
-          setShoesData(shoesArray);
-          setOtherData(othersArray);
-        }
-      } catch (error) {
-        console.error("Error fetching items: ", error);
-      }
+    return () => {
+      Voice.destroy().then(Voice.removeAllListeners);
     };
-
-    fetchItems();
   }, []);
 
-  const addToCart = async (item) => {
-    try {
-      let userId = await AsyncStorage.getItem("uid");
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchUser();
+    });
 
-      const cartDocRef = collection(db, "cartItems");
-      await addDoc(cartDocRef, {
-        title: item.title,
-        caption: item.caption,
-        imageUrl: item.imageUrl,
-        createdAt: new Date(),
-        userId: userId,
-        category: item.category,
-        price: item.price,
-        id: item.id,
-      });
+    return unsubscribe;
+  }, [navigation]);
 
-      alert("Item added to cart!");
-    } catch (error) {
-      console.error("Error adding item to cart: ", error);
-      alert("Failed to add item to cart.");
+
+  // useEffect(() => {
+  //   const unsubscribe = navigation.addListener("focus", () => {
+  //     console.log("active", assistant, "assistant - dashboard");
+  //     if (assistant && assistant == "true") {
+  //       console.log("hey");
+  //       setMicShow(true);
+  //     }
+  //   });
+
+  //   return unsubscribe;
+  // }, [navigation, assistant]);
+
+  useEffect(() => {
+    if (bData) {
+      setBagsData(bData);
     }
-    // console.log(item)
+    if (sData) {
+      setShoesData(sData);
+    }
+    if (oData) {
+      setOtherData(oData);
+    }
+  }, [bData, sData, oData]);
+
+  const onSpeechError = (event) => {
+    if (event) {
+    }
+  };
+  const onSpeechResults = (event) => {
+    if (event) {
+      setSearch(event?.value[0]);
+      console.log(event?.value[0]);
+    }
+  };
+
+  const startListening = async () => {
+    try {
+      setSearch("");
+      setStarted(true);
+      await Voice.start("en-US");
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const stopListening = async () => {
+    try {
+      await Voice.stop();
+      setStarted(false);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const emptySearchBar = () => {
+    setSearch(null);
+    fetchItems();
+  };
+
+  useEffect(() => {
+    if (search) {
+      filterItems(data);
+    }
+  }, [search]);
+
+  const filterItems = (items) => {
+    console.log(items, "item");
+    const filteredItems = items?.filter((item) =>
+      // item?.title?.toLowerCase().includes(search?.toLowerCase()) ||
+      item?.category?.toLowerCase().includes(search?.toLowerCase())
+    );
+    let bagArray = [];
+    let shoesArray = [];
+    let othersArray = [];
+    filteredItems?.forEach((item) => {
+      if (item?.category?.toLowerCase() === "bag") {
+        console.log(item, "bag category items");
+        bagArray.push(item);
+      } else if (item?.category?.toLowerCase() === "shoes") {
+        shoesArray?.push(item);
+      } else {
+        othersArray?.push(item);
+      }
+    });
+    setBagsData(bagArray);
+    setShoesData(shoesArray);
+    setOtherData(othersArray);
   };
 
   const shoesRenderItem = ({ item }) => {
     return (
-      <View style={[STYLES.card, { gap: 2 }]}>
+      <TouchableOpacity
+        style={[STYLES.card, { gap: 1 }]}
+        onPress={() =>
+          navigation.navigate("ItemDetails", {
+            title: item.title,
+            id: item.createdAt,
+          })
+        }
+      >
         <Image
           source={{ uri: item.imageUrl }}
           style={styles.image}
@@ -104,20 +158,25 @@ const Dashboard = () => {
         </Text>
         <Text
           style={[STYLES.placeholder, { width: 140, fontSize: 14 }]}
-          numberOfLines={3}
+          numberOfLines={2}
         >
           {item.caption}
         </Text>
         <Text style={styles.price}>Rs {item.price}</Text>
-        <TouchableOpacity style={styles.cartBtn} onPress={() => addToCart(item)}>
-          <Entypo name="shopping-cart" size={24} color={COLORS.white} />
-        </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
     );
   };
   const bagsRenderItem = ({ item }) => {
     return (
-      <View style={[STYLES.card, { gap: 2 }]}>
+      <TouchableOpacity
+        style={[STYLES.card, { gap: 1 }]}
+        onPress={() =>
+          navigation.navigate("ItemDetails", {
+            title: item.title,
+            id: item.createdAt,
+          })
+        }
+      >
         <Image
           source={{ uri: item.imageUrl }}
           style={styles.image}
@@ -128,15 +187,12 @@ const Dashboard = () => {
         </Text>
         <Text
           style={[STYLES.placeholder, { width: 140, fontSize: 14 }]}
-          numberOfLines={3}
+          numberOfLines={2}
         >
           {item.caption}
         </Text>
         <Text style={styles.price}>Rs {item.price}</Text>
-        <TouchableOpacity style={styles.cartBtn} onPress={() => addToCart(item)}>
-          <Entypo name="shopping-cart" size={24} color={COLORS.white} />
-        </TouchableOpacity>
-      </View>
+      </TouchableOpacity>
     );
   };
   return (
@@ -157,7 +213,13 @@ const Dashboard = () => {
           onChangeText={(text) => setSearch(text)}
           style={styles.searchbar}
         />
-        <FontAwesome5 name="search" size={20} color={COLORS.placeholder} />
+        {/* <FontAwesome5 name="search" size={20} color={COLORS.placeholder} /> */}
+
+        {search ? (
+          <TouchableOpacity onPress={emptySearchBar}>
+            <Entypo name="cross" size={24} color={"black"} />
+          </TouchableOpacity>
+        ) : null}
       </View>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* categories */}
@@ -206,6 +268,16 @@ const Dashboard = () => {
           </View>
         )}
       </ScrollView>
+     { started ? (
+      <TouchableOpacity style={styles.recBtn} onPress={stopListening}>
+        <Entypo name="dots-three-horizontal" size={24} color="white" />
+      </TouchableOpacity>
+      ) : (
+      <TouchableOpacity style={styles.recBtn} onPress={startListening}>
+        <FontAwesome name="microphone" size={24} color="white" />
+      </TouchableOpacity>
+      )}
+      <StatusBar style="dark" />
     </SafeAreaView>
   );
 };
@@ -229,13 +301,13 @@ const styles = StyleSheet.create({
     height: 100,
     width: 100,
     alignSelf: "center",
-    marginVertical: 10,
+    marginVertical: 5,
   },
   price: {
     fontFamily: "PoppinsBold",
     fontSize: 16,
     color: COLORS.blue,
-    top: 10,
+    // top: 5,
   },
   card: {
     backgroundColor: COLORS.white,
@@ -260,7 +332,28 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 15,
+    // marginTop: 15,
+  },
+  recBtn: {
+    backgroundColor: COLORS.blue,
+    padding: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 50,
+    width: 60,
+    height: 60,
+    position: "absolute",
+    shadowColor: COLORS.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 2,
+    shadowRadius: 2,
+    elevation: 3,
+    alignSelf: "flex-end",
+    bottom: "5%",
+    right: "10%",
   },
 });
 

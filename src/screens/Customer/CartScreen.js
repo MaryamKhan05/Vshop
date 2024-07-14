@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -15,46 +16,65 @@ import {
   where,
   getDocs,
   deleteDoc,
-  doc
+  doc,
 } from "firebase/firestore";
+import { useNavigation } from "@react-navigation/native";
 import { db } from "../../firebase/firebaseConfig";
-
 import STYLES from "../../constants/styles";
+import { context } from "../../context/context";
 import COLORS from "../../../assets/colors/colors";
 
 const Cart = () => {
-  const [data, setData] = useState(null);
-
-
+  const navigation = useNavigation();
+  const { fetchCartItems, cartData } = useContext(context);
+  const [data, setData] = useState([]);
+  const [totalPrice, setTotalPrice] = useState(0);
 
   useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        let userId = await AsyncStorage.getItem("uid");
-        const itemsCollectionRef = collection(db, "cartItems");
-        const q = query(itemsCollectionRef);
+    if (cartData) {
+      setData(cartData);
+      calculateTotalPrice(cartData);
+    }
+  }, [cartData]);
 
-        const querySnapshot = await getDocs(q);
-        let fetchedItems = [];
-        querySnapshot.forEach((doc) => {
-          fetchedItems.push({ id: doc.id, ...doc.data() });
-        });
-        console.log(fetchedItems);
-        setData(fetchedItems);
-      } catch (error) {
-        console.error("Error fetching items: ", error);
-      }
-    };
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchCartItems();
+    });
 
-    fetchItems();
-  }, []);
+    return unsubscribe;
+  }, [navigation]);
 
-  const deleteItem = async (itemId) => {
+  const calculateTotalPrice = (cartItems) => {
+    let total = 0;
+    cartItems.forEach((item) => {
+      total += parseFloat(item.price);
+    });
+    setTotalPrice(total);
+  };
+  const deleteItem = async (createdAt) => {
     try {
-      const itemDocRef = doc(db, "cartItems", itemId);
-      await deleteDoc(itemDocRef);
-      // Remove the item from the state after deletion
-      setData(data.filter((item) => item.id !== itemId));
+      let userId = await AsyncStorage.getItem("uid");
+      const cartItemsCollectionRef = collection(
+        db,
+        `users/${userId}/cartItems`
+      );
+
+      // Query to find the document with the matching createdAt
+      const q = query(
+        cartItemsCollectionRef,
+        where("createdAt", "==", createdAt)
+      );
+      const querySnapshot = await getDocs(q);
+
+      // Loop through the query results and delete each document
+      querySnapshot.forEach(async (doc) => {
+        await deleteDoc(doc.ref);
+      });
+      alert("item deteled successfully !");
+      fetchCartItems();
+      setData(cartData);
+      calculateTotalPrice(cartData);
     } catch (error) {
       console.error("Error deleting item: ", error);
     }
@@ -66,36 +86,47 @@ const Cart = () => {
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <View style={{ alignItems: "left" }}>
             <Text
-              style={[STYLES.semiHeading, { width: 200, textAlign: "left" }]}
+              style={[styles.semiHeading, { width: 200, textAlign: "left" }]}
             >
               {item.title}
             </Text>
             <Text style={[styles.caption, { width: 200 }]}>{item.caption}</Text>
-            <Text style={styles.price}> Rs {item.price}</Text>
+            <Text style={styles.price}>Rs {item.price}</Text>
           </View>
           <Image source={{ uri: item.imageUrl }} style={styles.image} />
         </View>
-        <TouchableOpacity style={styles.delete} onPress={() => deleteItem(item.id)}>
+        <TouchableOpacity
+          style={styles.delete}
+          onPress={() => deleteItem(item.createdAt)}
+        >
           <MaterialIcons name="delete" size={28} color="white" />
         </TouchableOpacity>
       </View>
     );
   };
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "white" }}>
       <FlatList
         data={data}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
       />
       <View style={styles.totalAmountContainer}>
-        <Text style={[styles.price, { color: "white" }]}>Rs. 999</Text>
-        <TouchableOpacity style={styles.proceedBtn}>
-          <Text style={[STYLES.semiHeading, { color: COLORS.blue }]}>
-            Proceed
-          </Text>
-        </TouchableOpacity>
+        {/* i want to show the total price of items here */}
+        <Text style={[styles.price, { color: "white" }]}>Rs. {totalPrice}</Text>
+        {totalPrice ? (
+          <TouchableOpacity
+            style={styles.proceedBtn}
+            onPress={() => navigation.navigate("Payment")}
+          >
+            <Text style={[STYLES.semiHeading, { color: COLORS.blue }]}>
+              Proceed
+            </Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
+
+      <StatusBar style="light" />
     </View>
   );
 };
@@ -111,26 +142,26 @@ const styles = StyleSheet.create({
   },
   caption: {
     fontFamily: "PoppinsRegular",
-    fontSize: 14,
+    fontSize: 12,
     color: COLORS.disableBlack,
-    margin: 3,
+    // margin: 1,
   },
   price: {
     fontFamily: "PoppinsBold",
-    fontSize: 18,
+    fontSize: 16,
     color: COLORS.blue,
   },
   delete: {
     backgroundColor: COLORS.blue,
-    padding: 10,
+    padding: 5,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 15,
+    marginTop: 5,
   },
   image: {
-    height: 100,
-    width: 100,
+    height: 80,
+    width: 80,
     borderRadius: 15,
   },
   totalAmountContainer: {
@@ -147,6 +178,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 5,
     width: 120,
+  },
+  semiHeading: {
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+    // padding: 5,
+    fontFamily: "PoppinsSemi",
   },
 });
 

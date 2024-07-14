@@ -12,13 +12,18 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vshop.Vshop"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.vshop.Vshop"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,6 +43,11 @@
           "speechRecognitionPermission": "CUSTOM: Allow $(PRODUCT_NAME) to securely recognize user speech"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "00f964dc-8740-4753-b109-cbf7733b2d8a"
+      }
+    }
   }
 }

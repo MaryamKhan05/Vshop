@@ -60,6 +60,11 @@ const STYLES = StyleSheet.create({
     borderColor: COLORS.blue,
     margin: 5,
   },
+  price: {
+    fontFamily: "PoppinsBold",
+    fontSize: 18,
+    color: COLORS.blue,
+  },
 });
 
 export default STYLES;
