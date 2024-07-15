@@ -9,11 +9,18 @@ import {
   Image,
   ScrollView,
 } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
 import { db } from "../../firebase/firebaseConfig";
 import STYLES from "../../constants/styles";
 import COLORS from "../../../assets/colors/colors";
@@ -27,54 +34,97 @@ const SellerDashboard = () => {
   const [bagsData, setBagsData] = useState(null);
   const [otherData, setOtherData] = useState(null);
 
+  const fetchItems = async () => {
+    try {
+      let userId = await AsyncStorage.getItem("uid");
+      const itemsCollectionRef = collection(db, "items");
+      const q = query(itemsCollectionRef);
+
+      const querySnapshot = await getDocs(q);
+      let fetchedItems = [];
+      querySnapshot.forEach((doc) => {
+        fetchedItems.push({ id: doc.id, ...doc.data() });
+      });
+      setData(fetchedItems);
+      let bagArray = [];
+      let shoesArray = [];
+      let othersArray = [];
+      for (let i = 0; i <= fetchedItems?.length; i++) {
+        if (fetchedItems[i]?.userId == userId) {
+          if (
+            fetchedItems[i]?.category == "Bag" ||
+            fetchedItems[i]?.category == "bag"
+          ) {
+            bagArray.push(fetchedItems[i]);
+          } else if (
+            fetchedItems[i]?.category == "Shoes" ||
+            fetchedItems[i]?.category == "shoes"
+          ) {
+            shoesArray.push(fetchedItems[i]);
+          } else {
+            othersArray.push(fetchedItems[i]);
+          }
+          setBagsData(bagArray);
+          setShoesData(shoesArray);
+          setOtherData(othersArray);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching items: ", error);
+    }
+  };
+  useEffect(() => {}, []);
   useEffect(() => {
-    const fetchItems = async () => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchItems();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const deleteItem = async (createdAt) => {
+
       try {
         let userId = await AsyncStorage.getItem("uid");
-        const itemsCollectionRef = collection(db, "items");
-        const q = query(itemsCollectionRef);
-
+        const itemRef = collection(
+          db,
+          `items`
+        );
+  
+        // Query to find the document with the matching createdAt
+        const q = query(
+          itemRef,
+          where("createdAt", "==", createdAt)
+        );
         const querySnapshot = await getDocs(q);
-        let fetchedItems = [];
-        querySnapshot.forEach((doc) => {
-          fetchedItems.push({ id: doc.id, ...doc.data() });
+  
+        // Loop through the query results and delete each document
+        querySnapshot.forEach(async (doc) => {
+          await deleteDoc(doc.ref);
         });
-        setData(fetchedItems);
-        let bagArray = [];
-        let shoesArray = [];
-        let othersArray = [];
-        for (let i = 0; i <= fetchedItems?.length; i++) {
-          if (fetchedItems[i]?.userId == userId) {
-            if (
-              fetchedItems[i]?.category == "Bag" ||
-              fetchedItems[i]?.category == "bag"
-            ) {
-              bagArray.push(fetchedItems[i]);
-            } else if (
-              fetchedItems[i]?.category == "Shoes" ||
-              fetchedItems[i]?.category == "shoes"
-            ) {
-              shoesArray.push(fetchedItems[i]);
-            } else {
-              othersArray.push(fetchedItems[i]);
-            }
-            setBagsData(bagArray);
-            setShoesData(shoesArray);
-            setOtherData(othersArray);
-          }
-        }
+        alert("item deteled successfully !");
+        fetchItems();
       } catch (error) {
-        console.error("Error fetching items: ", error);
+        console.error("Error deleting item: ", error);
       }
-    };
-
-    fetchItems();
-  }, []);
+    
+  };
 
   const shoesRenderItem = ({ item }) => {
     return (
       <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.deleteBtn}
+          onPress={() => deleteItem(item.createdAt)}
+        >
+          <MaterialCommunityIcons
+            name="delete-circle"
+            size={34}
+            color="white"
+          />
+        </TouchableOpacity>
         <Image source={{ uri: item.imageUrl }} style={styles.image} />
+
         <Text style={STYLES.profileHeading}>{item.title}</Text>
         <Text style={styles.price}>Rs {item.price}</Text>
       </View>
@@ -83,6 +133,16 @@ const SellerDashboard = () => {
   const bagsRenderItem = ({ item }) => {
     return (
       <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.deleteBtn}
+          onPress={() => deleteItem(item.createdAt)}
+        >
+          <MaterialCommunityIcons
+            name="delete-circle"
+            size={34}
+            color="white"
+          />
+        </TouchableOpacity>
         <Image source={{ uri: item.imageUrl }} style={styles.image} />
         <Text style={STYLES.profileHeading}>{item.title}</Text>
         <Text style={styles.price}>Rs {item.price}</Text>
@@ -91,25 +151,11 @@ const SellerDashboard = () => {
   };
   return (
     <SafeAreaView style={STYLES.container}>
-      {/* <TouchableOpacity>
-        <Image
-          source={require("../../assets/profilepic.jpg")}
-          style={styles.profilepic}
-          resizeMode="cover"
-        />
-      </TouchableOpacity> */}
       <Text style={STYLES.heading}>A Fresh Approach To The Selling ! </Text>
-      {/* searchbar */}
-      {/* <View style={styles.barRow}>
-        <TextInput
-          placeholder="Search Anything !"
-          value={search}
-          onChangeText={(text) => setSearch(text)}
-          style={styles.searchbar}
-        />
-        <FontAwesome5 name="search" size={20} color={COLORS.placeholder} />
-      </View> */}
-      <TouchableOpacity onPress={() => navigation.navigate("Add New Item")}>
+      <TouchableOpacity
+        style={styles.addBtn}
+        onPress={() => navigation.navigate("Add New Item")}
+      >
         <Button title="Add Item" />
       </TouchableOpacity>
       {data ? (
@@ -193,6 +239,7 @@ const styles = StyleSheet.create({
   price: {
     fontFamily: "PoppinsBold",
     fontSize: 16,
+    color: COLORS.blue,
   },
   card: {
     backgroundColor: COLORS.white,
@@ -201,7 +248,7 @@ const styles = StyleSheet.create({
     // alignItems: "flex-end",
     padding: 12,
     borderWidth: 1,
-    borderColor: COLORS.disableGrey,
+    borderColor: COLORS.blue,
     margin: 5,
   },
   profilepic: {
@@ -210,6 +257,21 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     backgroundColor: "red",
     alignSelf: "flex-end",
+  },
+  addBtn: {
+    position: "absolute",
+    bottom: "5%",
+    zIndex: 1,
+    alignSelf: "center",
+    width: "100%",
+  },
+  deleteBtn: {
+    position: "absolute",
+    alignSelf: "flex-end",
+    backgroundColor: "red",
+    borderRadius: 50,
+    padding: 2,
+    zIndex: 1,
   },
 });
 

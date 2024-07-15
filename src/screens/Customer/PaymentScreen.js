@@ -9,7 +9,6 @@ import {
   FlatList,
   Image,
 } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
 import { Fontisto } from "@expo/vector-icons";
 import STYLES from "../../constants/styles";
 import COLORS from "../../../assets/colors/colors";
@@ -17,7 +16,7 @@ import { context } from "../../context/context";
 import { Button } from "../../components/index";
 import { useNavigation } from "@react-navigation/native";
 
-const Payment = () => {
+const Payment = ({ route }) => {
   const navigation = useNavigation();
   const { userName, userPhone, fetchCartItems, cartData, fetchUser } =
     useContext(context);
@@ -27,10 +26,14 @@ const Payment = () => {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    if (cartData) {
+    if (route?.params) {
+      let dataArray = [route?.params];
+      console.log(route?.params);
+      setData(dataArray);
+    } else if (cartData) {
       setData(cartData);
     }
-  }, [cartData]);
+  }, [cartData, route?.params]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
@@ -54,12 +57,6 @@ const Payment = () => {
           </View>
           <Image source={{ uri: item.imageUrl }} style={styles.image} />
         </View>
-        {/* <TouchableOpacity
-          style={styles.delete}
-          onPress={() => deleteItem(item.createdAt)}
-        >
-          <MaterialIcons name="delete" size={28} color="white" />
-        </TouchableOpacity> */}
       </View>
     );
   };

@@ -23,12 +23,10 @@ const Dashboard = () => {
   const { bData, sData, oData, data, fetchItems, fetchUser, assistant } =
     useContext(context);
   const [search, setSearch] = useState(null);
-  // const [data, setData] = useState(null);
   const [shoesData, setShoesData] = useState(null);
   const [bagsData, setBagsData] = useState(null);
   const [otherData, setOtherData] = useState(null);
   const [started, setStarted] = useState(false);
-  const [micShow, setMicShow] = useState(false);
 
   useEffect(() => {
     Voice.onSpeechError = onSpeechError;
@@ -46,7 +44,6 @@ const Dashboard = () => {
 
     return unsubscribe;
   }, [navigation]);
-
 
   useEffect(() => {
     if (bData) {
@@ -145,11 +142,18 @@ const Dashboard = () => {
           {item.title}
         </Text>
         <Text
-          style={[STYLES.placeholder, { width: 140, fontSize: 14 }]}
-          numberOfLines={2}
+          style={[
+            STYLES.placeholder,
+            {
+              width: 140,
+              fontSize: 14,
+            },
+          ]}
+          numberOfLines={1}
         >
           {item.caption}
         </Text>
+
         <Text style={styles.price}>Rs {item.price}</Text>
       </TouchableOpacity>
     );
@@ -175,7 +179,7 @@ const Dashboard = () => {
         </Text>
         <Text
           style={[STYLES.placeholder, { width: 140, fontSize: 14 }]}
-          numberOfLines={2}
+          numberOfLines={1}
         >
           {item.caption}
         </Text>
@@ -256,14 +260,14 @@ const Dashboard = () => {
           </View>
         )}
       </ScrollView>
-     { started ? (
-      <TouchableOpacity style={styles.recBtn} onPress={stopListening}>
-        <Entypo name="dots-three-horizontal" size={24} color="white" />
-      </TouchableOpacity>
+      {started ? (
+        <TouchableOpacity style={styles.recBtn} onPress={stopListening}>
+          <Entypo name="dots-three-horizontal" size={24} color="white" />
+        </TouchableOpacity>
       ) : (
-      <TouchableOpacity style={styles.recBtn} onPress={startListening}>
-        <FontAwesome name="microphone" size={24} color="white" />
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.recBtn} onPress={startListening}>
+          <FontAwesome name="microphone" size={24} color="white" />
+        </TouchableOpacity>
       )}
       <StatusBar style="dark" />
     </SafeAreaView>
@@ -296,12 +300,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.blue,
     // top: 5,
+    flex: 1,
   },
   card: {
     backgroundColor: COLORS.white,
-    // height: "35%",
     borderRadius: 20,
-    // alignItems: "flex-end",
     padding: 12,
     borderWidth: 1,
     borderColor: COLORS.disableGrey,

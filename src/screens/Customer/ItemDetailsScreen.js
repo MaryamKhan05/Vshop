@@ -24,7 +24,6 @@ const ItemDetails = ({ route, navigation }) => {
   const { data } = useContext(context);
   const [started, setStarted] = useState(false);
   const [recognizedText, setRecognizedText] = useState("");
-  // const navigation = useNavigation();
   const { title, id } = route.params;
 
   useEffect(() => {
@@ -75,6 +74,16 @@ const ItemDetails = ({ route, navigation }) => {
       addToCart();
     }
   }, [recognizedText]);
+
+
+
+
+  const buyItem=()=>{
+    navigation.navigate("Payment", item)
+
+  }
+
+
 
   useEffect(() => {
     Voice.onSpeechError = onSpeechError;
@@ -127,9 +136,23 @@ const ItemDetails = ({ route, navigation }) => {
       <Text style={[STYLES.price, { paddingHorizontal: 5 }]}>
         Price: {item?.price}
       </Text>
-      <TouchableOpacity style={styles.btn} onPress={addToCart}>
-        <Button title="Add to Cart" />
-      </TouchableOpacity>
+      <View
+        style={{
+          flexDirection: "row",
+          flex: 1,
+          alignItems: "flex-end",
+          justifyContent: "center",
+        }}
+      >
+        <TouchableOpacity style={styles.btn} onPress={addToCart}>
+          <Button title="Add to Cart" wid={130} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.btn} onPress={buyItem}>
+          <Button title=" Buy Now " wid={130} />
+        </TouchableOpacity>
+      </View>
+
+      {/* voice assistant button */}
       {started ? (
         <TouchableOpacity style={styles.recBtn} onPress={stopListening}>
           <Entypo name="dots-three-horizontal" size={24} color="white" />
@@ -154,10 +177,7 @@ const styles = StyleSheet.create({
     textAlign: "left",
     marginVertical: 10,
   },
-  btn: {
-    justifyContent: "flex-end",
-    flex: 1,
-  },
+  btn: {},
   recBtn: {
     backgroundColor: COLORS.blue,
     padding: 5,

@@ -18,8 +18,8 @@ import {
   deleteDoc,
   doc,
 } from "firebase/firestore";
-import { useNavigation } from "@react-navigation/native";
 import { db } from "../../firebase/firebaseConfig";
+import { useNavigation } from "@react-navigation/native";
 import STYLES from "../../constants/styles";
 import { context } from "../../context/context";
 import COLORS from "../../../assets/colors/colors";
@@ -52,6 +52,7 @@ const Cart = () => {
     });
     setTotalPrice(total);
   };
+  
   const deleteItem = async (createdAt) => {
     try {
       let userId = await AsyncStorage.getItem("uid");
@@ -104,6 +105,8 @@ const Cart = () => {
       </View>
     );
   };
+
+
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
       <FlatList

@@ -8,12 +8,10 @@ const Loader = ({ visible }) => {
       transparent={true}
       animationType="none"
       visible={true}
-      onRequestClose={() => {}} // Required for Android
+      onRequestClose={() => {}} 
     >
       <View style={styles.modalBackground}>
-        {/* <View style={styles.activityIndicatorWrapper}> */}
           <ActivityIndicator size="large" color={COLORS.blue} />
-        {/* </View> */}
       </View>
     </Modal>
   );
