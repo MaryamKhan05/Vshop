@@ -48,18 +48,6 @@ const Dashboard = () => {
   }, [navigation]);
 
 
-  // useEffect(() => {
-  //   const unsubscribe = navigation.addListener("focus", () => {
-  //     console.log("active", assistant, "assistant - dashboard");
-  //     if (assistant && assistant == "true") {
-  //       console.log("hey");
-  //       setMicShow(true);
-  //     }
-  //   });
-
-  //   return unsubscribe;
-  // }, [navigation, assistant]);
-
   useEffect(() => {
     if (bData) {
       setBagsData(bData);

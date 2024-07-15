@@ -27,8 +27,10 @@ const SignUp = () => {
   const [name, setName] = useState(null);
   const [phone, setPhone] = useState(null);
   const [confirmPass, setConfirmPass] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSignUp = () => {
+    setLoading(true);
     createUserWithEmailAndPassword(auth, email, password)
       .then(async (userCredential) => {
         // Signed up
@@ -39,11 +41,13 @@ const SignUp = () => {
         //saving phone number and name in the firestore
         const userDocRef = doc(db, "users", user);
         await setDoc(userDocRef, { name, phone });
+        setLoading(false);
       })
       .catch((error) => {
+        setLoading(false);
         const errorCode = error.code;
         const errorMessage = error.message;
-        console.log("error ---> ", errorMessage);
+        alert(errorCode);
         // ..
       });
   };

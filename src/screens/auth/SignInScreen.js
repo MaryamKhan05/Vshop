@@ -14,22 +14,26 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebase/firebaseConfig";
 import STYLES from "../../constants/styles";
 import COLORS from "../../../assets/colors/colors";
-import { Button, Link } from "../../components/index";
+import { Button, Link, Loader } from "../../components/index";
 
 const SignIn = () => {
   const [email, setEmail] = useState(null);
   const [password, setPassword] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSignIn = () => {
+    setLoading(true);
     signInWithEmailAndPassword(auth, email, password)
-      .then(async(userCredential) => {
+      .then(async (userCredential) => {
         const user = userCredential.user.uid;
         await AsyncStorage.setItem("uid", userCredential.user?.uid);
+        setLoading(false);
       })
       .catch((error) => {
+        setLoading(false);
         const errorCode = error.code;
         const errorMessage = error.message;
-        console.log(errorMessage, "<---- error");
+        alert(errorCode);
       });
   };
   return (
@@ -77,6 +81,8 @@ const SignIn = () => {
       </TouchableOpacity>
       <Link text=" Don't have an account?" screen="Sign Up" />
       <StatusBar style="light" />
+
+      {loading && <Loader />}
     </SafeAreaView>
   );
 };
